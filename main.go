@@ -1,12 +1,15 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 type Message struct {
@@ -60,6 +63,20 @@ func main() {
 			}
 		}
 	}()
+	go func(conn Connections) {
+		var i = 0
+		for {
+			i++
+			time.Sleep(1 * time.Second)
+			for device := range conn.Devices {
+				device.Send(Message{
+					Data: fmt.Sprintf("www %d", i),
+					From: "Native",
+					To:   "any",
+				})
+			}
+		}
+	}(connections)
 	if err := http.ListenAndServe(":3456", router); err != nil {
 		log.Fatal(err)
 	}
